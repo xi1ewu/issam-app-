@@ -1,0 +1,329 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+enum Role {
+  USER
+  EXPERT
+  ADMIN
+}
+
+enum ConsultationStatus {
+  PENDING_PAYMENT
+  AWAITING_CONFIRMATION
+  UPCOMING
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionType {
+  VIDEO
+  AUDIO
+  CHAT
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String?
+  name       String
+  avatar     String?
+  googleId           String?  @unique
+  linkedinId         String?  @unique
+  twoFactorSecret    String?
+  isTwoFactorEnabled Boolean  @default(false)
+  role               Role     @default(USER)
+  phone           String?
+  isPhoneVerified Boolean  @default(false)
+  location   String?
+  company    String?
+  bio            String?
+  expoPushToken  String?
+  isBanned       Boolean  @default(false)
+  bannedReason   String?
+  bannedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultations ConversationParticipant[]
+  sentMessages  Message[]
+  payments      Payment[]
+  subscriptions Subscription[]
+  givenReviews  Review[]                  @relation("ReviewAuthor")
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  bookings      Consultation[]            @relation("ClientConsultations")
+  expert        Expert?
+  savedExperts  SavedExpert[]
+}
+
+model Expert {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  bio         String
+  category    String
+  expertise   String[]
+  hourlyRate  Float
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  isVerified  Boolean  @default(false)
+  isAvailable Boolean  @default(true)
+  yearsExp    Int      @default(0)
+  languages   String[] @default(["Arabic", "French"])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  consultations   Consultation[]  @relation("ExpertConsultations")
+  availability    Availability[]
+  receivedReviews Review[]        @relation("ReviewTarget")
+  savedByUsers    SavedExpert[]
+  profileViews    ProfileView[]
+  invoices        Invoice[]
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  expertId      String
+  expert        Expert        @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  clientName    String
+  clientEmail   String?
+  services      Json
+  subtotal      Float
+  tax           Float         @default(0)
+  total         Float
+  currency      String        @default("USD")
+  status        InvoiceStatus @default(DRAFT)
+  dueDate       String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  date      String
+  slots     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([expertId, date])
+}
+
+model Consultation {
+  id         String             @id @default(cuid())
+  clientId   String
+  client     User               @relation("ClientConsultations", fields: [clientId], references: [id])
+  expertId   String
+  expert     Expert             @relation("ExpertConsultations", fields: [expertId], references: [id])
+  date       String
+  time       String
+  duration   Int
+  type       SessionType
+  status     ConsultationStatus @default(PENDING_PAYMENT)
+  topic      String
+  price      Float
+  notes      String?
+  meetingUrl String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  payment Payment?
+  review  Review?
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  lastMessage   String?
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String
+  type           MessageType  @default(TEXT)
+  fileUrl        String?
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String
+  category    String
+  author      String
+  authorId    String?
+  isPremium   Boolean  @default(false)
+  readTime    Int      @default(5)
+  thumbnail   String?
+  publishedAt String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id             String       @id @default(cuid())
+  consultationId String       @unique
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  authorId       String
+  author         User         @relation("ReviewAuthor", fields: [authorId], references: [id])
+  expertId       String
+  expert         Expert       @relation("ReviewTarget", fields: [expertId], references: [id])
+  rating         Int
+  comment        String
+  createdAt      DateTime     @default(now())
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  consultationId        String        @unique
+  consultation          Consultation  @relation(fields: [consultationId], references: [id])
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id])
+  amount                Float
+  platformFee           Float
+  status                PaymentStatus @default(PENDING)
+  stripePaymentIntentId String?       @unique
+  stripeChargeId        String?
+  paypalOrderId         String?
+  paypalCaptureId       String?
+  chargilyCheckoutId    String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model SubscriptionPlan {
+  id             String         @id @default(cuid())
+  name           String
+  slug           String         @default("")
+  price          Float
+  priceYearly    Float?
+  period         String
+  features       String[]
+  isPopular      Boolean        @default(false)
+  stripePriceId  String?
+  subscriptions  Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id])
+  planId               String
+  plan                 SubscriptionPlan   @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus @default(ACTIVE)
+  billingPeriod        String             @default("monthly")
+  expiresAt            DateTime
+  stripeSubscriptionId String?
+  chargilyCheckoutId   String?
+  paypalOrderId        String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String   @default("SYSTEM")
+  isRead      Boolean  @default(false)
+  data        Json?
+  senderName  String?
+  senderAvatar String?
+  createdAt   DateTime @default(now())
+}
+
+model PlatformConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model SavedExpert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, expertId])
+}
+
+model ProfileView {
+  id       String   @id @default(cuid())
+  expertId String
+  expert   Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  userId   String?
+  viewedAt DateTime @default(now())
+}
