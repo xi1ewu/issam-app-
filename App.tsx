@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { I18nManager, View, StyleSheet, StatusBar } from 'react-native';
 import * as Localization from 'expo-localization';

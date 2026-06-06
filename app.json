@@ -57,7 +57,8 @@
           "iCloudContainerEnvironment": "Production"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-local-authentication"
     ],
     "scheme": ["da-consulting", "com.googleusercontent.apps.725657322947-9p8jjun8js7ge53c65uaeeij0r5ns09j"],
     "extra": {
