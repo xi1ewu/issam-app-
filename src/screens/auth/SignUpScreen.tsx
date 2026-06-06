@@ -104,10 +104,11 @@ export const SignUpScreen: React.FC<Props> = ({ onSignUp, onSignIn }) => {
   const slideAnim = useRef(new Animated.Value(60)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Fallback to 'dummy-id' if env var is missing to prevent useAuthRequest from throwing an unhandled JS crash!
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId:     process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID   || undefined,
-    iosClientId:     process.env.EXPO_PUBLIC_GOOGLE_IOS_ID      || undefined,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID  || undefined,
+    webClientId:     process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID   || 'dummy-web-id',
+    iosClientId:     process.env.EXPO_PUBLIC_GOOGLE_IOS_ID      || 'dummy-ios-id',
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID  || 'dummy-android-id',
     redirectUri: Platform.OS === 'ios' && process.env.EXPO_PUBLIC_GOOGLE_IOS_ID
       ? `${process.env.EXPO_PUBLIC_GOOGLE_IOS_ID.split('.').reverse().join('.')}:/oauth2redirect/google`
       : undefined
