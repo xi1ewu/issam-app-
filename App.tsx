@@ -97,6 +97,7 @@ interface NavState {
 
 export default function App() {
   const storeSetUser = useAppStore((s) => s.setUser);
+  const user = useAppStore((s) => s.user);
   const storeSetLoggedIn = useAppStore((s) => s.setLoggedIn);
   const storeSetRole = useAppStore((s) => s.setRole);
   const storeReset = useAppStore((s) => s.reset);
@@ -247,6 +248,7 @@ export default function App() {
       bio: (signedInUser as any).bio ?? undefined,
       location: (signedInUser as any).location ?? undefined,
       role: appRole,
+      isPhoneVerified: (signedInUser as any).isPhoneVerified ?? false,
     });
     storeSetLoggedIn(true);
     storeSetRole(appRole);
@@ -259,14 +261,8 @@ export default function App() {
 
     registerForPushNotifications().catch(() => {});
 
-    const phone = (signedInUser as any).phone ?? '';
-    const isPhoneVerified = (signedInUser as any).isPhoneVerified ?? false;
-
-    if (phone && !isPhoneVerified) {
-      replace('PhoneVerification', { phone });
-    } else {
-      replace('Onboarding');
-    }
+    // Allow user to explore unverified, they will be prompted on restricted actions
+    replace('Onboarding');
   };
 
   const handleSignOut = () => {
@@ -275,6 +271,14 @@ export default function App() {
     storeReset();
     replace('GetStarted');
   };
+
+  const requireVerification = useCallback((action: () => void) => {
+    if (user && !user.isPhoneVerified) {
+      push('PhoneVerification');
+    } else {
+      action();
+    }
+  }, [user, push]);
 
   const renderScreen = () => {
     const { screen, params } = current;
@@ -309,8 +313,15 @@ export default function App() {
       case 'PhoneVerification':
         return (
           <PhoneVerificationScreen
-            phone={params?.phone || ''}
-            onVerified={() => replace('Onboarding')}
+            phone={params?.phone || user.phone || ''}
+            onVerified={() => {
+              storeSetUser({ isPhoneVerified: true });
+              if (current.params?.fromSignUp) {
+                replace('Onboarding');
+              } else {
+                pop();
+              }
+            }}
             onBack={pop}
           />
         );
@@ -343,8 +354,8 @@ export default function App() {
           <ExpertProfileScreen
             expertId={params?.expertId || 'e1'}
             onBack={pop}
-            onSchedule={(id) => push('Schedule', { expertId: id })}
-            onChat={(id) => push('Chat', { expertId: id })}
+            onSchedule={(id) => requireVerification(() => push('Schedule', { expertId: id }))}
+            onChat={(id) => requireVerification(() => push('Chat', { expertId: id }))}
           />
         );
 
@@ -418,7 +429,7 @@ export default function App() {
           <ReportDetailsScreen
             reportId={params?.reportId ?? ''}
             onBack={pop}
-            onBookConsultation={() => push('ConsultantDirectory')}
+            onBookConsultation={() => requireVerification(() => push('ConsultantDirectory'))}
           />
         );
 
@@ -541,9 +552,9 @@ export default function App() {
           <HomeScreen
             onExpertPress={(id) => push('ExpertProfile', { expertId: id })}
             onSearchPress={() => push('ConsultantDirectory')}
-            onReportPress={(id) => id === 'all' ? setActiveTab('Reports') : push('ReportDetails', { reportId: id })}
+            onReportPress={(id) => id === 'all' ? setActiveTab('Reports') : requireVerification(() => push('ReportDetails', { reportId: id }))}
             onViewAllExperts={() => push('ConsultantDirectory')}
-            onNotificationsPress={() => push('Notifications')}
+            onNotificationsPress={() => requireVerification(() => push('Notifications'))}
             onProfilePress={() => setActiveTab('Profile')}
           />
         );
@@ -557,22 +568,22 @@ export default function App() {
       case 'Reports':
         return (
           <ReportsScreen
-            onReportPress={(id) => push('ReportDetails', { reportId: id })}
+            onReportPress={(id) => requireVerification(() => push('ReportDetails', { reportId: id }))}
           />
         );
       case 'Profile':
         return (
           <ProfileScreen
             onSignOut={handleSignOut}
-            onPremiumPress={() => push('PremiumPlans')}
-            onEditProfile={() => push('EditProfile')}
-            onMyConsultations={() => push('MyConsultations')}
-            onSettings={() => push('Settings')}
-            onSecurity={() => push('Security')}
-            onConsultantChat={() => push('Conversations')}
+            onPremiumPress={() => requireVerification(() => push('PremiumPlans'))}
+            onEditProfile={() => requireVerification(() => push('EditProfile'))}
+            onMyConsultations={() => requireVerification(() => push('MyConsultations'))}
+            onSettings={() => requireVerification(() => push('Settings'))}
+            onSecurity={() => requireVerification(() => push('Security'))}
+            onConsultantChat={() => requireVerification(() => push('Conversations'))}
             onMyReports={() => setActiveTab('Reports')}
-            onExpertHub={() => push('ExpertEarnings')}
-            onSavedExperts={() => push('SavedExperts')}
+            onExpertHub={() => requireVerification(() => push('ExpertEarnings'))}
+            onSavedExperts={() => requireVerification(() => push('SavedExperts'))}
           />
         );
       default:

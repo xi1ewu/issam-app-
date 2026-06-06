@@ -602,7 +602,18 @@ export const SignUpScreen: React.FC<Props> = ({ onSignUp, onSignIn }) => {
                     </TouchableOpacity>
                 }
               </View>
-              <Text style={s.terms}>Terms & Conditions · Privacy Policy</Text>
+
+              <TouchableOpacity 
+                style={{ marginTop: 24, alignItems: 'center' }}
+                onPress={() => {
+                  setOtpVerified(false);
+                  setStep(7);
+                }}
+              >
+                <Text style={{ color: '#8899AA', fontSize: 14, fontWeight: '600' }}>Skip for now</Text>
+              </TouchableOpacity>
+
+              <Text style={[s.terms, { marginTop: 16 }]}>Terms & Conditions · Privacy Policy</Text>
             </>}
 
           </ScrollView>

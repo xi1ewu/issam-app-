@@ -18,6 +18,7 @@ export interface UserProfile {
   bio?: string;
   role?: AppUserRole;
   isTwoFactorEnabled?: boolean;
+  isPhoneVerified?: boolean;
 }
 
 interface AppState {
@@ -60,6 +61,7 @@ const DEFAULT_USER: UserProfile = {
   email: '',
   phone: '',
   plan: 'free',
+  isPhoneVerified: false,
 };
 
 export const useAppStore = create<AppState>()(
