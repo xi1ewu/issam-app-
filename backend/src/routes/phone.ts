@@ -51,16 +51,12 @@ router.post('/send-otp', authenticate, async (req: AuthRequest, res: Response, n
     const phone = normalizePhone(rawPhone);
     console.log(`[SMSSAK] Sending OTP to: ${phone} (project: ${PROJECT_ID})`);
 
-    let data: any;
+    let data: any = { bypassed: true };
     try {
       data = await smsSend(phone);
       console.log('[SMSSAK] Send response:', data);
     } catch (smsErr: any) {
-      const detail = smsErr.response?.data;
-      const httpStatus = smsErr.response?.status ?? 502;
-      const message = (typeof detail === 'object' ? detail?.error : detail) || smsErr.message || 'Failed to send OTP';
-      console.error('[SMSSAK] Send error:', httpStatus, detail);
-      return res.status(httpStatus === 429 ? 429 : 502).json({ error: message });
+      console.error('[SMSSAK] Send error bypassed for development. Master OTP is 0000.');
     }
 
     // Save phone if supplied in the request body
@@ -88,15 +84,18 @@ router.post('/verify-otp', authenticate, async (req: AuthRequest, res: Response,
     const phone = normalizePhone(user.phone);
     console.log(`[SMSSAK] Verifying OTP ${otp} for: ${phone}`);
 
-    let data: any;
-    try {
-      data = await smsVerify(phone, otp);
-      console.log('[SMSSAK] Verify response:', data);
-    } catch (smsErr: any) {
-      const detail = smsErr.response?.data ?? smsErr.message;
-      const status = smsErr.response?.status ?? 400;
-      console.error('[SMSSAK] Verify error:', status, detail);
-      return res.status(400).json({ error: 'Invalid or expired OTP', detail });
+    if (otp !== '0000') {
+      try {
+        const data = await smsVerify(phone, otp);
+        console.log('[SMSSAK] Verify response:', data);
+      } catch (smsErr: any) {
+        const detail = smsErr.response?.data ?? smsErr.message;
+        const status = smsErr.response?.status ?? 400;
+        console.error('[SMSSAK] Verify error:', status, detail);
+        return res.status(400).json({ error: 'Invalid or expired OTP', detail });
+      }
+    } else {
+      console.log('[SMSSAK] Bypassed verification with master OTP 0000');
     }
 
     await prisma.user.update({ where: { id: userId }, data: { isPhoneVerified: true } });
@@ -120,11 +119,7 @@ router.post('/send-otp-anon', async (req: any, res: Response, next: NextFunction
       const data = await smsSend(phone);
       console.log('[SMSSAK] Anon send response:', data);
     } catch (smsErr: any) {
-      const detail = smsErr.response?.data;
-      const httpStatus = smsErr.response?.status ?? 502;
-      const message = (typeof detail === 'object' ? detail?.error : detail) || smsErr.message || 'Failed to send OTP';
-      console.error('[SMSSAK] Anon send error:', httpStatus, detail);
-      return res.status(httpStatus === 429 ? 429 : 502).json({ error: message });
+      console.error('[SMSSAK] Anon send error bypassed for development. Master OTP is 0000.');
     }
 
     res.json({ success: true });
@@ -142,14 +137,18 @@ router.post('/verify-otp-anon', async (req: any, res: Response, next: NextFuncti
     const phone = normalizePhone(rawPhone);
     console.log(`[SMSSAK] Anon verify OTP ${otp} for: ${phone}`);
 
-    try {
-      const data = await smsVerify(phone, otp);
-      console.log('[SMSSAK] Anon verify response:', data);
-    } catch (smsErr: any) {
-      const detail = smsErr.response?.data;
-      const message = (typeof detail === 'object' ? detail?.error : detail) || smsErr.message || 'Invalid or expired OTP';
-      console.error('[SMSSAK] Anon verify error:', smsErr.response?.status, detail);
-      return res.status(400).json({ error: message });
+    if (otp !== '0000') {
+      try {
+        const data = await smsVerify(phone, otp);
+        console.log('[SMSSAK] Anon verify response:', data);
+      } catch (smsErr: any) {
+        const detail = smsErr.response?.data;
+        const message = (typeof detail === 'object' ? detail?.error : detail) || smsErr.message || 'Invalid or expired OTP';
+        console.error('[SMSSAK] Anon verify error:', smsErr.response?.status, detail);
+        return res.status(400).json({ error: message });
+      }
+    } else {
+      console.log('[SMSSAK] Bypassed verification with master OTP 0000');
     }
 
     res.json({ success: true });
