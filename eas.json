@@ -4,13 +4,6 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "env": {
-      "EXPO_PUBLIC_API_URL": "https://issam-app.onrender.com",
-      "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "725657322947-roh3714h9evdk12151725ppdnev84unc.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_IOS_ID": "725657322947-9p8jjun8js7ge53c65uaeeij0r5ns09j.apps.googleusercontent.com",
-      "EXPO_PUBLIC_GOOGLE_ANDROID_ID": "725657322947-dummyandroid.apps.googleusercontent.com",
-      "EXPO_PUBLIC_LINKEDIN_CLIENT_ID": "dummy-linkedin"
-    },
     "development": {
       "developmentClient": true,
       "distribution": "internal"
@@ -19,7 +12,14 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://issam-app.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "725657322947-roh3714h9evdk12151725ppdnev84unc.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_ID": "725657322947-9p8jjun8js7ge53c65uaeeij0r5ns09j.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_ID": "725657322947-dummyandroid.apps.googleusercontent.com",
+        "EXPO_PUBLIC_LINKEDIN_CLIENT_ID": "dummy-linkedin"
+      }
     },
     "apk": {
       "android": {
@@ -29,6 +29,13 @@
     "simulator": {
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://issam-app.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "725657322947-roh3714h9evdk12151725ppdnev84unc.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_ID": "725657322947-9p8jjun8js7ge53c65uaeeij0r5ns09j.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_ID": "725657322947-dummyandroid.apps.googleusercontent.com",
+        "EXPO_PUBLIC_LINKEDIN_CLIENT_ID": "dummy-linkedin"
       }
     }
   },
