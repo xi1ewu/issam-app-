@@ -59,6 +59,9 @@ export const SignInScreen: React.FC<Props> = ({ onSignIn, onSignUp, onBack }) =>
     webClientId:     process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID   || undefined,
     iosClientId:     process.env.EXPO_PUBLIC_GOOGLE_IOS_ID      || undefined,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID  || undefined,
+    redirectUri: Platform.OS === 'ios' && process.env.EXPO_PUBLIC_GOOGLE_IOS_ID
+      ? `${process.env.EXPO_PUBLIC_GOOGLE_IOS_ID.split('.').reverse().join('.')}:/oauth2redirect/google`
+      : undefined
   });
 
   const linkedinRedirectUri = AuthSession.makeRedirectUri();
